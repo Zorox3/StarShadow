@@ -25,6 +25,7 @@ $RECYCLE.BIN/
 *.mp4
 *.svg
 *.psd
+cache.*.css
 
 
 # Windows shortcuts
