@@ -1,0 +1,93 @@
+<?php
+class TemplateModul {
+	private $_page;
+	public function __construct($page) {
+		if ($page !== null) {
+			$this->_page = $page;
+		} else {
+			$this->_page = "index";
+		}
+	}
+	
+	/*
+	 * LOADS A MODULE AND PLACES THE DATA
+	 */
+	public function loadModul($modul, $data_m = null, $functions = false) {
+		return self::loadModulByPath ( $modul, './template/module/' . $this->_page, $data_m, $functions );
+	}
+	
+	/*
+	 * LOADS A MODULE AND PLACES THE DATA BY A GIVEN PATH
+	 */
+	public static function loadModulByPath($modul, $path, $data_m = null, $functions = false) {
+		if (file_exists ( $path . '/mod.' . $modul . '.php' )) {
+			if ($functions) {
+				
+				require_once ($path . '/mod.' . $modul . '.php');
+				// return true;
+			} else {
+				$content = file_get_contents ( $path . '/mod.' . $modul . '.php' );
+				if (is_array ( $data_m )) {
+					
+					$content_lines = explode ( "\n", $content );
+					$content_output = array ();
+					
+					foreach ( $content_lines as $count => $line ) {
+						
+						if ($line == " " || $line == "")
+							continue;
+						
+						if ($begin !== null && $end !== null) {
+							
+							if (! isset ( $data_m [$testIndex] ) || $data_m [$testIndex] == "") {
+								
+								for($i = $begin; $i <= $end; $i ++) {
+									
+									unset ( $content_output [$i] );
+								}
+							}
+							$begin = null;
+							$end = null;
+						}
+						
+						if ($ifBegin = strpos ( $line, "{if}" )) {
+							$testIndex = substr ( $line, $ifBegin + 4, - 1 );
+							$begin = $count;
+							$content_output [] = "";
+							continue;
+						}
+						
+						if ($ifEnd = strpos ( $line, "{/if}" )) {
+							$end = $count;
+							$content_output [] = "";
+							continue;
+						}
+						
+						foreach ( $data_m as $index => $d ) {
+							if(strpos($index, "compress_") !== false){
+								$type = pathinfo($path, PATHINFO_EXTENSION);
+								$data = file_get_contents($d);
+								$base64Img = 'data:image/' . $type . ';base64,' . base64_encode($data);
+								
+								$line = str_replace ( "{!" . $index . "}", $base64Img, $line );
+							}
+							else{
+								$line = str_replace ( "{!" . $index . "}", $d, $line );
+							}
+						}
+						
+						$content_output [] = $line;
+					}
+					
+					$content = implode ( "\n", $content_output );
+				}
+			}
+			
+			return $content;
+		} else {
+			return '<div style="border: 1 solid black; width: 500px; background: rgb(150,70,70); text-align: center; padding: 20px; margin: 100px auto;"><b>' . $path . '/mod.' . $modul . '.php not found!</b></div>';
+		}
+	}
+}
+
+?>
